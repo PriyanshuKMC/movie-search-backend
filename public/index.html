@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CricWatch Live 🏏</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #0a0a0a;
+      --bg-secondary: #111;
+      --bg-card: #1a1a1a;
+      --bg-input: #222;
+      --accent-green: #00c853;
+      --accent-gold: #ffc107;
+      --accent-red: #f44336;
+      --text-primary: #f0f0f0;
+      --text-muted: #888;
+      --border: #2a2a2a;
+      --shadow-glow: 0 0 30px rgba(0, 200, 83, 0.15);
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── NAVBAR ── */
+    nav {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    .nav-brand span.logo { font-size: 1.5rem; }
+
+    .nav-brand span.name { color: var(--accent-green); }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(244, 67, 54, 0.15);
+      border: 1px solid var(--accent-red);
+      border-radius: 20px;
+      padding: 0.3rem 0.8rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent-red);
+      letter-spacing: 0.05em;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-red);
+      border-radius: 50%;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    /* ── MAIN CONTENT ── */
+    main {
+      flex: 1;
+      padding: 1.5rem;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    /* ── PLAYER SECTION ── */
+    .player-section { display: flex; flex-direction: column; gap: 1rem; }
+
+    .player-container {
+      background: var(--bg-card);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: var(--shadow-glow), 0 4px 24px rgba(0,0,0,0.5);
+      border: 1px solid var(--border);
+    }
+
+    .player-wrapper {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%; /* 16:9 */
+    }
+
+    .player-wrapper iframe {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      border: none;
+    }
+
+    .player-info {
+      padding: 1rem 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .player-info h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .player-info p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    .live-now-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--accent-red);
+      color: #fff;
+      border-radius: 6px;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      animation: glow-red 2s ease-in-out infinite;
+    }
+
+    @keyframes glow-red {
+      0%, 100% { box-shadow: 0 0 8px rgba(244,67,54,0.4); }
+      50% { box-shadow: 0 0 16px rgba(244,67,54,0.8); }
+    }
+
+    /* ── MATCH INFO CARD ── */
+    .match-info-card {
+      background: var(--bg-card);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      padding: 1.2rem;
+    }
+
+    .match-info-card h3 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent-gold);
+      margin-bottom: 1rem;
+    }
+
+    .match-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.8rem;
+    }
+
+    .stat-item {
+      background: var(--bg-input);
+      border-radius: 10px;
+      padding: 0.8rem;
+      text-align: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,200,83,0.15);
+    }
+
+    .stat-item .stat-icon { font-size: 1.4rem; margin-bottom: 0.3rem; }
+
+    .stat-item .stat-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .stat-item .stat-value {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-top: 0.25rem;
+    }
+
+    /* ── CHAT PANEL ── */
+    .chat-panel {
+      background: var(--bg-card);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      height: 600px;
+      position: sticky;
+      top: 72px;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      padding: 0.9rem 1.1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .chat-header h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .chat-count {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      scroll-behavior: smooth;
+    }
+
+    .chat-messages::-webkit-scrollbar { width: 4px; }
+    .chat-messages::-webkit-scrollbar-track { background: transparent; }
+    .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .chat-msg {
+      background: var(--bg-input);
+      border-radius: 10px;
+      padding: 0.6rem 0.8rem;
+      animation: fadeInUp 0.3s ease;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .chat-msg .msg-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.2rem;
+    }
+
+    .chat-msg .msg-user {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--accent-green);
+    }
+
+    .chat-msg .msg-time {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+
+    .chat-msg .msg-text {
+      font-size: 0.85rem;
+      color: var(--text-primary);
+      word-break: break-word;
+    }
+
+    .chat-form {
+      padding: 0.8rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .chat-input {
+      flex: 1;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.6rem 0.8rem;
+      color: var(--text-primary);
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .chat-input:focus { border-color: var(--accent-green); }
+    .chat-input::placeholder { color: var(--text-muted); }
+
+    .chat-send-btn {
+      background: var(--accent-green);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 0.9rem;
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .chat-send-btn:hover { opacity: 0.85; }
+    .chat-send-btn:active { transform: scale(0.95); }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 1.2rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      background: var(--bg-secondary);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .chat-panel {
+        height: 420px;
+        position: static;
+      }
+
+      .match-stats {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 480px) {
+      main { padding: 1rem 0.75rem; }
+      .match-stats { grid-template-columns: repeat(2, 1fr); }
+      .nav-brand span.name { font-size: 1.1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav>
+    <a class="nav-brand" href="#">
+      <span class="logo">🏏</span>
+      <span class="name">CricWatch Live</span>
+    </a>
+    <div class="live-badge">
+      <div class="pulse-dot"></div>
+      LIVE
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main>
+    <div class="content-grid">
+
+      <!-- LEFT: Player + Match Info -->
+      <div class="player-section">
+
+        <!-- Video Player -->
+        <div class="player-container">
+          <div class="player-wrapper">
+            <iframe
+              src="https://dadocric.st/player.php?id=starsp3&v=m"
+              allowfullscreen
+              allow="autoplay; fullscreen"
+              title="Live Cricket Match Stream"
+            ></iframe>
+          </div>
+          <div class="player-info">
+            <div>
+              <h2>Live Cricket Match</h2>
+              <p>High-quality live stream — enjoy every moment of the action</p>
+            </div>
+            <div class="live-now-badge">
+              🔴 LIVE NOW
+            </div>
+          </div>
+        </div>
+
+        <!-- Match Info Card -->
+        <div class="match-info-card">
+          <h3>⚡ Match Details</h3>
+          <div class="match-stats">
+            <div class="stat-item">
+              <div class="stat-icon">🏏</div>
+              <div class="stat-label">Match</div>
+              <div class="stat-value">India vs Australia</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-icon">🏆</div>
+              <div class="stat-label">Tournament</div>
+              <div class="stat-value">T20 World Cup 2026</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-icon">🏟️</div>
+              <div class="stat-label">Venue</div>
+              <div class="stat-value">Melbourne Cricket Ground</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: Live Chat -->
+      <div class="chat-panel">
+        <div class="chat-header">
+          <h3>💬 Live Chat</h3>
+          <span class="chat-count" id="chat-count">0 messages</span>
+        </div>
+        <div class="chat-messages" id="chat-messages"></div>
+        <div class="chat-form">
+          <input
+            type="text"
+            class="chat-input"
+            id="chat-input"
+            placeholder="Say something..."
+            maxlength="200"
+            autocomplete="off"
+          />
+          <button class="chat-send-btn" id="chat-send">Send</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    © 2026 CricWatch Live — All Rights Reserved
+  </footer>
+
+  <script>
+    (function () {
+      const username = 'CricketFan' + Math.floor(Math.random() * 9000 + 1000);
+      let lastMessageCount = 0;
+      let isAtBottom = true;
+
+      const messagesEl = document.getElementById('chat-messages');
+      const inputEl = document.getElementById('chat-input');
+      const sendBtn = document.getElementById('chat-send');
+      const countEl = document.getElementById('chat-count');
+
+      // Track scroll position to avoid auto-scrolling when user is reading old msgs
+      messagesEl.addEventListener('scroll', () => {
+        const threshold = 60;
+        isAtBottom =
+          messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight < threshold;
+      });
+
+      function formatTime(isoString) {
+        const d = new Date(isoString);
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+
+      function renderMessages(messages) {
+        const newCount = messages.length;
+        if (newCount === lastMessageCount) return;
+
+        // Only render new messages to avoid flicker
+        const existingIds = new Set(
+          Array.from(messagesEl.querySelectorAll('.chat-msg')).map(el => el.dataset.id)
+        );
+
+        messages.forEach(msg => {
+          if (!existingIds.has(String(msg.id))) {
+            const div = document.createElement('div');
+            div.className = 'chat-msg';
+            div.dataset.id = msg.id;
+            div.innerHTML =
+              '<div class="msg-header">' +
+                '<span class="msg-user">' + escapeHtml(msg.username) + '</span>' +
+                '<span class="msg-time">' + formatTime(msg.timestamp) + '</span>' +
+              '</div>' +
+              '<div class="msg-text">' + escapeHtml(msg.message) + '</div>';
+            messagesEl.appendChild(div);
+          }
+        });
+
+        lastMessageCount = newCount;
+        countEl.textContent = newCount + ' message' + (newCount !== 1 ? 's' : '');
+
+        if (isAtBottom) {
+          messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      async function fetchMessages() {
+        try {
+          const res = await fetch('/api/chat');
+          if (!res.ok) return;
+          const data = await res.json();
+          renderMessages(data.messages);
+        } catch (e) {
+          // silently ignore network errors during polling
+        }
+      }
+
+      async function sendMessage() {
+        const message = inputEl.value.trim();
+        if (!message) return;
+
+        sendBtn.disabled = true;
+        inputEl.disabled = true;
+
+        try {
+          const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, message }),
+          });
+          if (res.ok) {
+            inputEl.value = '';
+            isAtBottom = true;
+            await fetchMessages();
+          }
+        } catch (e) {
+          // silently ignore
+        } finally {
+          sendBtn.disabled = false;
+          inputEl.disabled = false;
+          inputEl.focus();
+        }
+      }
+
+      sendBtn.addEventListener('click', sendMessage);
+      inputEl.addEventListener('keydown', e => {
+        if (e.key === 'Enter') sendMessage();
+      });
+
+      // Initial fetch + polling every 3 seconds
+      fetchMessages();
+      setInterval(fetchMessages, 3000);
+    })();
+  </script>
+</body>
+</html>
