@@ -1,9 +1,11 @@
-name: Deploy Backend
+name: CI
 on:
     push:
         branches: [ main ]
+    pull_request:
+        branches: [ main ]
 jobs:
-    build-and-deploy:
+    test:
         runs-on: ubuntu-latest
         steps:
         - uses: actions/checkout@v3
@@ -13,10 +15,18 @@ jobs:
               node-version: '18'
         - name: Install dependencies
           run: npm install
-        - name: Build
-          run: npm start &
-        - name: Deploy to GitHub Pages
-          uses: peaceiris/actions-gh-pages@v3
-          with:
-              github_token: ${{ secrets.GITHUB_TOKEN }}
-              publish_dir: .
+        - name: Start server and verify endpoints
+          run: |
+              node server.js &
+              SERVER_PID=$!
+              sleep 2
+              curl -sf http://localhost:3000/api/stream-info | jq -e '.match.status == "LIVE"'
+              curl -sf http://localhost:3000/api/scorecard | jq -e '.scorecard.innings | length > 0'
+              curl -sf http://localhost:3000/api/viewers | jq -e '.viewers | type == "number"'
+              curl -sf http://localhost:3000/api/chat | jq -e '.messages | type == "array"'
+              curl -sf -X POST http://localhost:3000/api/chat \
+                -H 'Content-Type: application/json' \
+                -d '{"username":"TestUser","message":"CI check"}' | jq -e '.message.id | type == "number"'
+              kill $SERVER_PID
+          env:
+              PORT: 3000
