@@ -58,6 +58,27 @@
 
     .nav-brand span.name { color: var(--accent-green); }
 
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .viewer-count {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .viewer-count .viewer-icon { font-size: 1rem; }
+
+    .viewer-count #viewer-num {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
     .live-badge {
       display: flex;
       align-items: center;
@@ -216,6 +237,121 @@
       margin-top: 0.25rem;
     }
 
+    /* ── SCORECARD ── */
+    .scorecard-card {
+      background: var(--bg-card);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .scorecard-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .scorecard-tab {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: color 0.2s, background 0.2s;
+      text-align: center;
+    }
+
+    .scorecard-tab:hover { color: var(--text-primary); background: rgba(255,255,255,0.04); }
+
+    .scorecard-tab.active {
+      color: var(--accent-green);
+      border-bottom: 2px solid var(--accent-green);
+    }
+
+    .scorecard-body { padding: 1rem; }
+
+    .innings-summary {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 0.8rem;
+    }
+
+    .innings-summary .team-name {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .innings-summary .innings-score {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--accent-green);
+    }
+
+    .innings-summary .innings-overs {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-left: 0.4rem;
+    }
+
+    /* Batting table */
+    .score-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      margin-bottom: 1rem;
+    }
+
+    .score-table thead th {
+      text-align: left;
+      color: var(--text-muted);
+      font-weight: 600;
+      padding: 0.35rem 0.4rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .score-table thead th:not(:first-child) { text-align: center; }
+
+    .score-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+
+    .score-table tbody td {
+      padding: 0.45rem 0.4rem;
+      border-bottom: 1px solid rgba(42,42,42,0.5);
+    }
+
+    .score-table tbody td:not(:first-child) { text-align: center; }
+
+    .score-table .batter-name { font-weight: 600; color: var(--text-primary); }
+
+    .score-table .batter-status {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      display: block;
+    }
+
+    .score-table .not-out { color: var(--accent-green); }
+
+    .section-label {
+      font-size: 0.72rem;
+      color: var(--accent-gold);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      margin: 0.8rem 0 0.4rem;
+    }
+
+    .scorecard-loading {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 2rem 1rem;
+      font-size: 0.9rem;
+    }
+
     /* ── CHAT PANEL ── */
     .chat-panel {
       background: var(--bg-card);
@@ -367,6 +503,7 @@
       main { padding: 1rem 0.75rem; }
       .match-stats { grid-template-columns: repeat(2, 1fr); }
       .nav-brand span.name { font-size: 1.1rem; }
+      .viewer-count { display: none; }
     }
   </style>
 </head>
@@ -378,9 +515,15 @@
       <span class="logo">🏏</span>
       <span class="name">CricWatch Live</span>
     </a>
-    <div class="live-badge">
-      <div class="pulse-dot"></div>
-      LIVE
+    <div class="nav-right">
+      <div class="viewer-count">
+        <span class="viewer-icon">👁️</span>
+        <span id="viewer-num">—</span>&nbsp;watching
+      </div>
+      <div class="live-badge">
+        <div class="pulse-dot"></div>
+        LIVE
+      </div>
     </div>
   </nav>
 
@@ -388,7 +531,7 @@
   <main>
     <div class="content-grid">
 
-      <!-- LEFT: Player + Match Info -->
+      <!-- LEFT: Player + Match Info + Scorecard -->
       <div class="player-section">
 
         <!-- Video Player -->
@@ -434,6 +577,21 @@
           </div>
         </div>
 
+        <!-- Scorecard -->
+        <div class="scorecard-card">
+          <div class="scorecard-tabs" role="tablist">
+            <button class="scorecard-tab active" data-innings="0" role="tab" aria-selected="true">
+              🇮🇳 India (Bat)
+            </button>
+            <button class="scorecard-tab" data-innings="1" role="tab" aria-selected="false">
+              🇦🇺 Australia (Chase)
+            </button>
+          </div>
+          <div class="scorecard-body" id="scorecard-body">
+            <div class="scorecard-loading">Loading scorecard…</div>
+          </div>
+        </div>
+
       </div>
 
       <!-- RIGHT: Live Chat -->
@@ -466,6 +624,7 @@
 
   <script>
     (function () {
+      /* ── CHAT ── */
       const username = 'CricketFan' + Math.floor(Math.random() * 9000 + 1000);
       let lastMessageCount = 0;
       let isAtBottom = true;
@@ -574,6 +733,111 @@
       // Initial fetch + polling every 3 seconds
       fetchMessages();
       setInterval(fetchMessages, 3000);
+
+      /* ── SCORECARD ── */
+      let scorecardData = null;
+      let activeInnings = 0;
+
+      const scorecardBody = document.getElementById('scorecard-body');
+      const tabs = document.querySelectorAll('.scorecard-tab');
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+          tab.classList.add('active');
+          tab.setAttribute('aria-selected', 'true');
+          activeInnings = parseInt(tab.dataset.innings, 10);
+          if (scorecardData) renderScorecard(scorecardData, activeInnings);
+        });
+      });
+
+      function renderScorecard(sc, inningsIndex) {
+        const innings = sc.innings[inningsIndex];
+        if (!innings) { scorecardBody.innerHTML = '<div class="scorecard-loading">No data available.</div>'; return; }
+
+        function strikeRate(runs, balls) {
+          return balls > 0 ? ((runs / balls) * 100).toFixed(1) : '0.0';
+        }
+
+        // Batting table rows
+        const battingRows = innings.batters.map(b => {
+          const isNotOut = b.status === 'not out';
+          return '<tr>' +
+            '<td>' +
+              '<span class="batter-name' + (isNotOut ? ' not-out' : '') + '">' + escapeHtml(b.name) + (isNotOut ? ' *' : '') + '</span>' +
+              '<span class="batter-status">' + escapeHtml(b.status) + '</span>' +
+            '</td>' +
+            '<td>' + b.runs + '</td>' +
+            '<td>' + b.balls + '</td>' +
+            '<td>' + b.fours + '</td>' +
+            '<td>' + b.sixes + '</td>' +
+            '<td>' + strikeRate(b.runs, b.balls) + '</td>' +
+          '</tr>';
+        }).join('');
+
+        // Bowling table rows
+        const bowlingRows = innings.bowlers.map(b =>
+          '<tr>' +
+            '<td><span class="batter-name">' + escapeHtml(b.name) + '</span></td>' +
+            '<td>' + b.overs + '</td>' +
+            '<td>' + b.maidens + '</td>' +
+            '<td>' + b.runs + '</td>' +
+            '<td>' + b.wickets + '</td>' +
+            '<td>' + b.economy.toFixed(1) + '</td>' +
+          '</tr>'
+        ).join('');
+
+        scorecardBody.innerHTML =
+          '<div class="innings-summary">' +
+            '<span class="team-name">' + innings.flag + ' ' + escapeHtml(innings.team) + ' Innings</span>' +
+            '<div>' +
+              '<span class="innings-score">' + innings.total + '/' + innings.wickets + '</span>' +
+              '<span class="innings-overs">(' + innings.overs + ' ov)</span>' +
+            '</div>' +
+          '</div>' +
+          '<p class="section-label">Batting</p>' +
+          '<table class="score-table">' +
+            '<thead><tr><th>Batter</th><th>R</th><th>B</th><th>4s</th><th>6s</th><th>SR</th></tr></thead>' +
+            '<tbody>' + battingRows + '</tbody>' +
+          '</table>' +
+          '<p class="section-label">Bowling</p>' +
+          '<table class="score-table">' +
+            '<thead><tr><th>Bowler</th><th>O</th><th>M</th><th>R</th><th>W</th><th>Econ</th></tr></thead>' +
+            '<tbody>' + bowlingRows + '</tbody>' +
+          '</table>';
+      }
+
+      async function fetchScorecard() {
+        try {
+          const res = await fetch('/api/scorecard');
+          if (!res.ok) return;
+          const data = await res.json();
+          scorecardData = data.scorecard;
+          renderScorecard(scorecardData, activeInnings);
+        } catch (e) {
+          // silently ignore
+        }
+      }
+
+      fetchScorecard();
+      setInterval(fetchScorecard, 10000);
+
+      /* ── VIEWER COUNT ── */
+      const viewerNumEl = document.getElementById('viewer-num');
+
+      async function fetchViewers() {
+        try {
+          const res = await fetch('/api/viewers');
+          if (!res.ok) return;
+          const data = await res.json();
+          viewerNumEl.textContent = data.viewers.toLocaleString();
+        } catch (e) {
+          // silently ignore
+        }
+      }
+
+      fetchViewers();
+      setInterval(fetchViewers, 15000);
     })();
   </script>
 </body>

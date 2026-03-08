@@ -1,11 +1,13 @@
 # CricWatch Live 🏏
 
-A full-featured online Cricket match watching space — watch live cricket matches in a beautifully designed, immersive viewing experience with live chat.
+A full-featured online Cricket match watching space — watch live cricket matches in a beautifully designed, immersive viewing experience with live chat and live scorecard.
 
 ## Features
 
 - 🎥 **Live Streaming** — Embeds a real-time cricket match stream directly in your browser
+- 📊 **Live Scorecard** — Tabbed batting & bowling scorecard for both innings, auto-refreshes every 10 seconds
 - 💬 **Live Chat** — Chat with other fans while watching the match (auto-refreshes every 3 seconds)
+- 👁️ **Viewer Count** — Displays how many fans are currently watching (updates every 15 seconds)
 - 📱 **Responsive Design** — Works seamlessly on desktop and mobile devices
 - 🌙 **Dark Theme** — Modern dark UI with cricket-themed green and gold accents
 - ⚡ **Match Info** — Displays current match details (teams, tournament, venue)
@@ -50,11 +52,13 @@ cricwatch-live/
 
 ## API Endpoints
 
-| Method | Endpoint           | Description                          |
-|--------|--------------------|--------------------------------------|
-| GET    | `/api/stream-info` | Returns stream URL and match metadata|
-| GET    | `/api/chat`        | Fetch recent chat messages           |
-| POST   | `/api/chat`        | Post a new chat message              |
+| Method | Endpoint           | Description                                        |
+|--------|--------------------|----------------------------------------------------|
+| GET    | `/api/stream-info` | Returns stream URL and match metadata              |
+| GET    | `/api/scorecard`   | Returns live batting & bowling scorecard           |
+| GET    | `/api/viewers`     | Returns current simulated viewer count             |
+| GET    | `/api/chat`        | Fetch recent chat messages                         |
+| POST   | `/api/chat`        | Post a new chat message                            |
 
 ## Screenshot
 
